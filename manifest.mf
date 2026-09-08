@@ -1,0 +1,3 @@
+Manifest-Version: 1.0
+X-COMMENT: Main-Class will be added automatically by build
+SplashScreen-Image: Eidi/_123Fastq/GUI/Image/Logo.png

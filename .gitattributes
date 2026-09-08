@@ -1,0 +1,19 @@
+* text=auto
+*.java text eol=lf
+*.form text eol=lf
+*.xml text eol=lf
+*.properties text eol=lf
+*.md text eol=lf
+*.txt text eol=lf
+*.html text eol=lf
+*.xsl text eol=lf
+*.fa text eol=lf
+*.mf text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+.gitignore text eol=lf
+.gitattributes text eol=lf
+*.ps1 text eol=crlf
+*.sh text eol=lf
+*.jar binary
+*.png binary

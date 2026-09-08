@@ -1,0 +1,28 @@
+# Build output
+/build/
+/dist/
+
+# NetBeans local user state
+/nbproject/private/
+
+# IDE/editor state
+/.idea/
+/.vscode/
+*.swp
+*.swo
+
+# OS metadata
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs and temporary files
+*.log
+*.tmp
+*.bak
+*.old
+
+# Local automation/tooling state
+/.agents/
+/.codex/
+/.github/modernize/

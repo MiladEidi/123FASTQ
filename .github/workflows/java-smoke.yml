@@ -1,0 +1,33 @@
+name: Java Smoke Test
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  compile-and-smoke-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Compile sources
+        run: |
+          mkdir -p build/classes
+          find src -name "*.java" > sources.txt
+          javac -encoding UTF-8 --release 8 -cp "lib/*" -d build/classes @sources.txt
+
+      - name: Run smoke tests
+        run: |
+          mkdir -p build/test-classes
+          find test -name "*.java" > test-sources.txt
+          javac -encoding UTF-8 --release 8 -cp "build/classes:lib/*" -d build/test-classes @test-sources.txt
+          java -cp "build/test-classes:build/classes:lib/*" Eidi._123Fastq.TrimFactoryPackage.AdapterTrimmerSmokeTest
+          java -cp "build/test-classes:build/classes:src:lib/*" Eidi._123Fastq.QualityControlPackage.Results.QcRunnerSmokeTest
