@@ -54,11 +54,6 @@ public class KmerContent extends AbstractQCModule implements MergeableQCModule {
     BaseGroup[] groups;
 
     public KmerContent() {
-//		if (Config.getInstance().kmer_size != null) {
-//			int kmerSize = Config.getInstance().kmer_size;
-//			MIN_KMER_SIZE = kmerSize;
-//			MAX_KMER_SIZE = kmerSize;
-//		}
     }
 
     public boolean ignoreFilteredSequences() {
@@ -270,8 +265,6 @@ public class KmerContent extends AbstractQCModule implements MergeableQCModule {
         }
 
         minGraphValue = 0;
-
-//		System.err.println("Max value="+maxGraphValue+" min value="+minGraphValue);
         this.enrichedKmers = finalKMers;
 
         // Delete the initial data structure so we don't suck up more memory
@@ -547,7 +540,6 @@ public class KmerContent extends AbstractQCModule implements MergeableQCModule {
             }
 
             if (position == 0) {
-                System.err.println("No value > 0 for " + sequence);
                 position = 1;
             }
 

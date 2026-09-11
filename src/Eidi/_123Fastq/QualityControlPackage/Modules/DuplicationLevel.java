@@ -116,7 +116,6 @@ public class DuplicationLevel extends AbstractQCModule implements MergeableQCMod
 
         }
 
-//		System.err.println("True total = "+overrepresentedModule.count+" inferred total is "+rawTotal+" dedup total is "+dedupTotal);
         labels = new String[16];
         for (int i = 0; i < deduplicatedPercentages.length; i++) {
             if (i < 9) {
@@ -149,7 +148,6 @@ public class DuplicationLevel extends AbstractQCModule implements MergeableQCMod
 
     private static double getCorrectedCount(long countAtLimit, long totalCount, int duplicationLevel, int numberOfObservations) {
 
-//		System.err.println("Count at limit = "+countAtLimit+" total = "+totalCount+" Dup level = "+duplicationLevel+" no obs = "+numberOfObservations);
         // See if we can bail out early
         if (countAtLimit == totalCount) {
             return numberOfObservations;

@@ -2,12 +2,8 @@ package Eidi._123Fastq.QualityControlPackage.Sequence;
 
 import ch.systemsx.cisd.hdf5.HDF5Factory;
 import ch.systemsx.cisd.hdf5.IHDF5SimpleReader;
-import ch.systemsx.cisd.hdf5.h5ar.ArchiveEntry;
-import ch.systemsx.cisd.hdf5.h5ar.HDF5ArchiverFactory;
-import ch.systemsx.cisd.hdf5.h5ar.IHDF5ArchiveReader;
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
 import javax.swing.JOptionPane;
 
 public class Fast5File implements SequenceFile {
@@ -15,21 +11,8 @@ public class Fast5File implements SequenceFile {
     private Sequence nextSequence = null;
     private File file;
     private String name;
-//    private boolean isMultiFast5 = false;
 
     private void readNext() throws SequenceFormatException {
-
-        //MultiFast5 files can be handelled in the future versions....
-//        HDF5ArchiverFactory archive = new HDF5ArchiverFactory();
-//        IHDF5ArchiveReader arReader = archive.openForReading(file);
-//        List<ArchiveEntry> list = arReader.list();
-//        for (ArchiveEntry archiveEntry : list) {
-//            String tmp = archiveEntry.getPath().toLowerCase();
-//            if (tmp.startsWith("/read") || tmp.startsWith("read")) {
-//                isMultiFast5 = true;
-//                break;
-//            }
-//        }
         String[] rdfPaths = new String[]{
             "Analyses/Basecall_2D_000/BaseCalled_template/Fastq",
             "Analyses/Basecall_2D_000/BaseCalled_2D/Fastq",
@@ -37,10 +20,6 @@ public class Fast5File implements SequenceFile {
             "Analyses/Basecall_1D_000/BaseCalled_1D/Fastq"
         };
 
-//        if (isMultiFast5) {
-//            System.out.println("File is MultiFast5.");
-//            throw new SequenceFormatException("No valid fastq paths found in " + file);
-//        } else {
         String[] sections = null;
         IHDF5SimpleReader reader = HDF5Factory.openForReading(file);
         boolean foundReadPath = false;
@@ -64,7 +43,6 @@ public class Fast5File implements SequenceFile {
         if (!foundReadPath) {
             throw new SequenceFormatException("No valid fastq paths found in " + file);
         }
-//        }
     }
 
     protected Fast5File(File file) throws SequenceFormatException, IOException {

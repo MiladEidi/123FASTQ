@@ -68,9 +68,7 @@ public class Pathways {
             String suffix = suffixes[i];
             int x = core.lastIndexOf(suffix);
             if (x != -1) {
-                System.out.println(core);
                 core = core.substring(0, x) + core.substring(x + suffix.length(), core.length());
-                System.out.println(core);
                 break;
             }
         }

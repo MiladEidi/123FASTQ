@@ -50,8 +50,6 @@ public class AdapterContent extends AbstractQCModule implements MergeableQCModul
                 File adaptersFile = new File(filesDirectory + "dependencies/adapter_list.txt");
                 rsrc = new FileInputStream(adaptersFile.getAbsolutePath());
             } catch (Exception e) {
-                //for src version
-                System.out.println("Embedded adapter list file has been used.");
                 rsrc = ContaminentFinder.class.getResourceAsStream("/Eidi/_123Fastq/QualityControlPackage/QC_Configs/adapter_list.txt");
             }
 
@@ -350,7 +348,6 @@ public class AdapterContent extends AbstractQCModule implements MergeableQCModul
             long[] newPositions = new long[newLength];
             for (int i = 0; i < positions.length; i++) {
                 newPositions[i] = positions[i];
-                //System.err.println("Copied value "+positions[i]+" at position "+i);
             }
             // Copy the current longest value to the newly added slots
             if (positions.length > 0) {

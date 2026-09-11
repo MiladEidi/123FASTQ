@@ -1889,8 +1889,6 @@ public class TrimPanel extends MyJPanel {
                         String filesDirectory = (new File(getClass().getProtectionDomain().getCodeSource().getLocation().getPath()).getParent() + "/").replace("%20", " ");
                         AdapterFile = new File(filesDirectory + "dependencies/trimmerAdapters/" + getComboAdaptersFiles());
                         if (!AdapterFile.exists()) {
-                            //For src version
-                            System.out.println("Embedded adapter files have been used.");
                             AdapterFile = new File("src/Eidi/_123Fastq/TrimFactoryPackage/adapters/" + getComboAdaptersFiles());
                         }
                         AdapterTrimmer A = new AdapterTrimmer(txtDetails);

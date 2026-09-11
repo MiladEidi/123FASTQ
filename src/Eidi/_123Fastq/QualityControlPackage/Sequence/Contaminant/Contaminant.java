@@ -57,7 +57,6 @@ public class Contaminant {
         // a match of at least 20bp to consider this a match at all
         for (int offset = 0 - (forward.length - 20); offset < q.length - 20; offset++) {
             ContaminantHit thisHit = findMatch(forward, q, offset, ContaminantHit.FORWARD);
-//			System.out.println("Best match from offset "+offset+" was "+thisHit);
             if (thisHit == null) {
                 continue;
             }
@@ -106,7 +105,6 @@ public class Contaminant {
                     if (1 + (end - start) > 20) {
                         int id = (((1 + (end - start)) - (mismatchCount - 1)) * 100) / (1 + (end - start));
                         if (bestHit == null || bestHit.length() < 1 + (end - start) || (bestHit.length() == 1 + (end - start) && bestHit.percentID() < id)) {
-//							System.out.println("New best hit from "+start+"-"+end);
                             bestHit = new ContaminantHit(this, direction, 1 + (end - start), id);
                         }
                     }

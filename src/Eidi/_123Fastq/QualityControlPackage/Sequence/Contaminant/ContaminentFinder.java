@@ -22,8 +22,6 @@ public class ContaminentFinder {
 
         for (int c = 0; c < contaminants.length; c++) {
             ContaminantHit thisHit = contaminants[c].findMatch(sequence);
-
-//			System.out.println("Best hit from "+c+" is "+thisHit);
             if (thisHit == null) {
                 continue; // No hit
             }
@@ -51,9 +49,6 @@ public class ContaminentFinder {
                 File contaminations = new File(filesDirectory + "dependencies/contaminant_list.txt");
                 rsrc = new FileInputStream(contaminations.getAbsolutePath());
             } catch (Exception e) {
-
-//for src version
-                System.out.println("Embedded contaminant file has been used.");
                 rsrc = ContaminentFinder.class.getResourceAsStream("/Eidi/_123Fastq/QualityControlPackage/QC_Configs/contaminant_list.txt");
             }
             if (rsrc == null) {
@@ -82,21 +77,9 @@ public class ContaminentFinder {
 
             br.close();
         } catch (IOException e) {
-            e.printStackTrace();
+            // contaminant file unreadable — list stays empty
         }
 
         return c.toArray(new Contaminant[0]);
     }
-
-    /*
-	public static void main (String [] args) {
-
-		Config cfg=new Config();
-		String query = "agagtgtagatctccgtggtcgccgtatca";
-
-		ContaminantHit c = findContaminantHit(cfg,query);
-
-		System.out.println("Query was "+query.length()+"bp Found hit "+c);
-
-	}*/
 }
