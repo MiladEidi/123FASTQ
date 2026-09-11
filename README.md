@@ -4,38 +4,53 @@
 
 ## Project Layout
 
-- `src/` - Java source code and bundled adapter/config resources.
-- `test/` - lightweight smoke tests that can run without JUnit.
-- `lib/` - required third-party jars for local compilation.
-- `build.xml` and `nbproject/` - NetBeans/Ant project files.
+- `src/` — Java source code and bundled adapter/config resources.
+- `test/` — lightweight smoke tests that run without JUnit.
+- `lib/` — required third-party JARs (included in the repository).
+- `build.xml` and `nbproject/` — NetBeans/Ant project files.
 
-Generated folders such as `build/` and `dist/` are intentionally ignored by git.
+Generated folders (`build/`, `dist/`) are ignored by git.
 
-## Build From Source
+## Requirements
 
-With a JDK installed, compile the project from the repository root:
+- Java 8 or later (Java 17+ recommended)
 
-```powershell
-New-Item -ItemType Directory -Force -Path build\classes | Out-Null
-$sources = Get-ChildItem -Recurse -Filter *.java src | ForEach-Object { $_.FullName }
-javac -encoding UTF-8 -source 8 -target 8 -cp "lib/*" -d build\classes $sources
+## Build
+
+### With Ant (recommended)
+
+```bash
+ant jar
 ```
 
-If Ant is installed, the NetBeans project can also be built with:
+Produces `dist/123Fastq.jar`.
 
-```powershell
-ant clean jar
+### With plain javac
+
+```bash
+mkdir -p build/classes
+find src -name "*.java" > sources.txt
+javac -encoding UTF-8 --release 8 -cp "lib/*" -d build/classes @sources.txt
 ```
 
-## Adapter Trimming Smoke Test
+## Run
 
-```powershell
-New-Item -ItemType Directory -Force -Path build\test-classes | Out-Null
-javac -encoding UTF-8 -source 8 -target 8 -cp "build/classes;lib/*" -d build\test-classes @(Get-ChildItem -Path test -Recurse -Filter *.java | ForEach-Object { $_.FullName })
-java -cp "build/test-classes;build/classes;lib/*" Eidi._123Fastq.TrimFactoryPackage.AdapterTrimmerSmokeTest
-java -cp "build/test-classes;build/classes;src;lib/*" Eidi._123Fastq.QualityControlPackage.Results.QcRunnerSmokeTest
+```bash
+java -cp "build/classes:lib/*" Eidi._123Fastq.GUI.App123Fastq
+```
+
+Or with the JAR:
+
+```bash
+java -jar dist/123Fastq.jar
 ```
 
 ## QC Threads
 
-Quality control asks for a thread count when starting single-file or comparative QC. The default is the available processor count and can also be set with `-D123fastq.qc.threads=<threads>` or the `123FASTQ_QC_THREADS` environment variable.
+Quality control asks for a thread count when starting single-file or comparative QC. The default is the number of available processors. Override with:
+
+```bash
+java -D123fastq.qc.threads=4 -jar dist/123Fastq.jar
+```
+
+or the environment variable `123FASTQ_QC_THREADS`.
