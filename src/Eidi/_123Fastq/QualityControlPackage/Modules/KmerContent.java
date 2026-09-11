@@ -400,6 +400,21 @@ public class KmerContent extends AbstractQCModule implements MergeableQCModule {
         kmers.clear();
     }
 
+    /**
+     * Returns the sequence of the most enriched kmer if one exists, otherwise null.
+     * Used by the auto-trim logic as a fallback adapter signal when AdapterContent
+     * finds no known adapter.
+     */
+    public String getTopKmer() {
+        if (!calculated) {
+            calculateEnrichment();
+        }
+        if (enrichedKmers != null && enrichedKmers.length > 0) {
+            return enrichedKmers[0].sequence();
+        }
+        return null;
+    }
+
     public String description() {
         return "Identifies short sequences which have uneven representation";
     }

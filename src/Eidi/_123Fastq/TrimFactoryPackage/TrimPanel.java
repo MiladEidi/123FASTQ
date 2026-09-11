@@ -2375,8 +2375,8 @@ public class TrimPanel extends MyJPanel {
         String Adapter = txtAdapterSeq.getText();
         if (txtAdapterSeq.getText().trim().length() > 0 && !Pattern.matches("([ATCGatcg]+)", Adapter)) {
             lblWarnAdapterSeq.setText("Adapter sequence should contain only A, T, C or G.");
-        } else if (txtAdapterSeq.getText().trim().length() >= 10) {
-            lblWarnAdapterSeq.setText("To get a better result, use a 5-10 bases kmer");
+        } else if (txtAdapterSeq.getText().trim().length() > 7) {
+            lblWarnAdapterSeq.setText("Long sequences are matched using 7-mers extracted from the adapter.");
         } else {
             lblWarnAdapterSeq.setText("");
         }
@@ -3033,8 +3033,11 @@ public class TrimPanel extends MyJPanel {
         this.chkAdapterTrim.setSelected(chkAdapterTrim);
     }
 
-    public void setRdioAdapterSeqApproach(boolean rdioAdapterSeqApproach) {
-        this.rdioAdapterSeqApproach.setSelected(rdioAdapterSeqApproach);
+    public void setRdioAdapterSeqApproach(boolean selected) {
+        this.rdioAdapterSeqApproach.setSelected(selected);
+        if (selected) {
+            activateAdapterSeqApproach();
+        }
     }
 
     public void setTxtAdapterSeq(String txtAdapterSeq) {

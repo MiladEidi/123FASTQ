@@ -9,6 +9,7 @@ import Eidi._123Fastq.GUI.TaskQueue;
 import Eidi._123Fastq.QualityControlPackage.Modules.AdapterContent;
 import Eidi._123Fastq.QualityControlPackage.Modules.BasicStats;
 import Eidi._123Fastq.QualityControlPackage.Modules.IgnoresModule;
+import Eidi._123Fastq.QualityControlPackage.Modules.KmerContent;
 import Eidi._123Fastq.QualityControlPackage.Modules.ModuleFactory;
 import Eidi._123Fastq.QualityControlPackage.Modules.NContent;
 import Eidi._123Fastq.QualityControlPackage.Modules.PerBaseQualityScores;
@@ -718,6 +719,7 @@ public class ResultsPanel extends MyJPanel {
         AdapterContent AC = new AdapterContent();
         NContent NC = new NContent();
         PerBaseSequenceContent PBSC = new PerBaseSequenceContent();
+        KmerContent KC = null;
         for (QCModule module : modules1) {
             if (module.name().equals("Basic Statistics")) {
                 BS = (BasicStats) module;
@@ -737,6 +739,9 @@ public class ResultsPanel extends MyJPanel {
             if (module.name().equals("Per Base Sequence Content")) {
                 PBSC = (PerBaseSequenceContent) module;
             }
+            if (module.name().equals("Kmer Content")) {
+                KC = (KmerContent) module;
+            }
         }
 
         //simple analysis to make decision for quality trimming
@@ -750,6 +755,11 @@ public class ResultsPanel extends MyJPanel {
 
         //fetching some data
         String Adapter = AC.mostIncidenceAdapterSequence();
+        // Fallback: if AdapterContent found nothing, use the top overrepresented kmer
+        // from KmerContent as the adapter seed (it raises a warning/error when meaningful)
+        if (Adapter == null && KC != null && KC.raisesWarning()) {
+            Adapter = KC.getTopKmer();
+        }
         Integer EndCropBps = PBSC.getEndCropbps();
         Integer ThresholdEndCrop = PBSC.getEndCropThreshold();
 
@@ -864,12 +874,14 @@ public class ResultsPanel extends MyJPanel {
         AdapterContent AC1 = new AdapterContent();
         NContent NC1 = new NContent();
         PerBaseSequenceContent PBSC1 = new PerBaseSequenceContent();
+        KmerContent KC1 = null;
         SequenceLengthDistribution SLD2 = new SequenceLengthDistribution();
         BasicStats BS2 = new BasicStats(name2);
         PerBaseQualityScores PBQS2 = new PerBaseQualityScores();
         AdapterContent AC2 = new AdapterContent();
         NContent NC2 = new NContent();
         PerBaseSequenceContent PBSC2 = new PerBaseSequenceContent();
+        KmerContent KC2 = null;
         for (QCModule module : modules1) {
             if (module.name().equals("Basic Statistics")) {
                 BS1 = (BasicStats) module;
@@ -888,6 +900,9 @@ public class ResultsPanel extends MyJPanel {
             }
             if (module.name().equals("Per Base Sequence Content")) {
                 PBSC1 = (PerBaseSequenceContent) module;
+            }
+            if (module.name().equals("Kmer Content")) {
+                KC1 = (KmerContent) module;
             }
         }
         for (QCModule module : modules2) {
@@ -908,6 +923,9 @@ public class ResultsPanel extends MyJPanel {
             }
             if (module.name().equals("Per Base Sequence Content")) {
                 PBSC2 = (PerBaseSequenceContent) module;
+            }
+            if (module.name().equals("Kmer Content")) {
+                KC2 = (KmerContent) module;
             }
         }
 
@@ -931,6 +949,13 @@ public class ResultsPanel extends MyJPanel {
         //fetching some data
         String Adapter1 = AC1.mostIncidenceAdapterSequence();
         String Adapter2 = AC2.mostIncidenceAdapterSequence();
+        // Fallback: use top overrepresented kmer when AdapterContent finds nothing
+        if (Adapter1 == null && KC1 != null && KC1.raisesWarning()) {
+            Adapter1 = KC1.getTopKmer();
+        }
+        if (Adapter2 == null && KC2 != null && KC2.raisesWarning()) {
+            Adapter2 = KC2.getTopKmer();
+        }
         Integer EndCropBps1 = PBSC1.getEndCropbps();
         Integer EndCropBps2 = PBSC2.getEndCropbps();
         Integer ThresholdEndCrop1 = PBSC1.getEndCropThreshold();
