@@ -66,7 +66,6 @@ public class ModuleConfig {
                 rsrc = new FileInputStream(Limitations.getAbsoluteFile());
             } catch (Exception e) {
             //For src version
-                System.out.println("Embedded config file has been used.");
                 rsrc = ContaminentFinder.class.getResourceAsStream("/Eidi/_123Fastq/QualityControlPackage/QC_Configs/QC_Config.txt");
             }
             if (rsrc == null) {

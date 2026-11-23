@@ -10,6 +10,11 @@
 <project name="123Fastq" default="default" basedir=".">
     <description>Builds, tests, and runs the project 123Fastq.</description>
     <import file="nbproject/build-impl.xml"/>
+    <target name="-post-jar" if="do.archive">
+        <jar destfile="${dist.jar}" update="true" duplicate="preserve" compress="${jar.compress}">
+            <zipgroupfileset dir="lib" includes="*.jar"/>
+        </jar>
+    </target>
     <!--
 
     There exist several targets which are by default empty and which can be

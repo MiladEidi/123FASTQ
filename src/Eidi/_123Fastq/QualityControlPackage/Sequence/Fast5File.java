@@ -1,10 +1,9 @@
 package Eidi._123Fastq.QualityControlPackage.Sequence;
 
-import ch.systemsx.cisd.hdf5.HDF5Factory;
-import ch.systemsx.cisd.hdf5.IHDF5SimpleReader;
+import Eidi._123Fastq.ConvertorsPackage.Fast5ToFastq.Fast5FileParser;
+import Eidi._123Fastq.TrimFactoryPackage.FastqRecord;
 import java.io.File;
 import java.io.IOException;
-import javax.swing.JOptionPane;
 
 public class Fast5File implements SequenceFile {
 
@@ -12,37 +11,11 @@ public class Fast5File implements SequenceFile {
     private File file;
     private String name;
 
-    private void readNext() throws SequenceFormatException {
-        String[] rdfPaths = new String[]{
-            "Analyses/Basecall_2D_000/BaseCalled_template/Fastq",
-            "Analyses/Basecall_2D_000/BaseCalled_2D/Fastq",
-            "Analyses/Basecall_1D_000/BaseCalled_template/Fastq",
-            "Analyses/Basecall_1D_000/BaseCalled_1D/Fastq"
-        };
-
-        String[] sections = null;
-        IHDF5SimpleReader reader = HDF5Factory.openForReading(file);
-        boolean foundReadPath = false;
-        for (int r = 0; r < rdfPaths.length; r++) {
-            if (reader.exists(rdfPaths[r])) {
-                foundReadPath = true;
-                String fastq = reader.readString(rdfPaths[r]);
-                sections = fastq.split("\\n");
-                if (sections.length != 4) {
-                    throw new SequenceFormatException("Didn't get 4 sections from " + fastq);
-                }
-                break;
-            }
-        }
-        try {
-            nextSequence = new Sequence(this, sections[1].toUpperCase(), sections[3], sections[0]);
-        } catch (NullPointerException e) {
-            JOptionPane.showMessageDialog(null, "123Fastq couldn't find any read in the fast5 file!", "Error", JOptionPane.ERROR_MESSAGE);
-        }
-        reader.close();
-        if (!foundReadPath) {
-            throw new SequenceFormatException("No valid fastq paths found in " + file);
-        }
+    private void readNext() throws SequenceFormatException, IOException {
+        Fast5FileParser parser = new Fast5FileParser();
+        parser.Fast5FileParse(file);
+        FastqRecord read = parser.next();
+        nextSequence = new Sequence(this, read.getSequence(), read.getQuality(), read.getName());
     }
 
     protected Fast5File(File file) throws SequenceFormatException, IOException {

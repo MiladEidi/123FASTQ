@@ -35,6 +35,12 @@ public class AdapterTrimmer implements Trimmer {
 
     private JTextArea messenger;
 
+    private void log(String message) {
+        if (messenger != null) {
+            messenger.append(message);
+        }
+    }
+
     public AdapterTrimmer(JTextArea messenger) {
         this.messenger = messenger;
     }
@@ -86,9 +92,6 @@ public class AdapterTrimmer implements Trimmer {
     }
 
     public void loadSequences(String seqPath, Integer minPrefix) throws IOException {
-        FastaParser parser = new FastaParser();
-        parser.parse(new File(seqPath));
-
         Map<String, FastaRecord> forwardSeqMap = new HashMap<>();
         Map<String, FastaRecord> reverseSeqMap = new HashMap<>();
         Map<String, FastaRecord> commonSeqMap = new HashMap<>();
@@ -96,24 +99,27 @@ public class AdapterTrimmer implements Trimmer {
         Set<String> forwardPrefix = new HashSet<>();
         Set<String> reversePrefix = new HashSet<>();
 
-        while (parser.hasNext()) {
-            FastaRecord rec = parser.next();
-            String name = rec.getName();
+        try (FastaParser parser = new FastaParser()) {
+            parser.parse(new File(seqPath));
+            while (parser.hasNext()) {
+                FastaRecord rec = parser.next();
+                String name = rec.getName();
 
-            if (name.endsWith(SUFFIX_F)) {
-                forwardSeqMap.put(name, rec);
-                if (name.startsWith(PREFIX)) {
-                    String clippedName = name.substring(0, name.length() - SUFFIX_F.length());
-                    forwardPrefix.add(clippedName);
+                if (name.endsWith(SUFFIX_F)) {
+                    forwardSeqMap.put(name, rec);
+                    if (name.startsWith(PREFIX)) {
+                        String clippedName = name.substring(0, name.length() - SUFFIX_F.length());
+                        forwardPrefix.add(clippedName);
+                    }
+                } else if (name.endsWith(SUFFIX_R)) {
+                    reverseSeqMap.put(name, rec);
+                    if (name.startsWith(PREFIX)) {
+                        String clippedName = name.substring(0, name.length() - SUFFIX_R.length());
+                        reversePrefix.add(clippedName);
+                    }
+                } else {
+                    commonSeqMap.put(name, rec);
                 }
-            } else if (name.endsWith(SUFFIX_R)) {
-                reverseSeqMap.put(name, rec);
-                if (name.startsWith(PREFIX)) {
-                    String clippedName = name.substring(0, name.length() - SUFFIX_R.length());
-                    reversePrefix.add(clippedName);
-                }
-            } else {
-                commonSeqMap.put(name, rec);
             }
         }
 
@@ -136,7 +142,7 @@ public class AdapterTrimmer implements Trimmer {
         reverseSeqs = mapClippingSet(reverseSeqMap);
         commonSeqs = mapClippingSet(commonSeqMap);
 
-        messenger.append("Adapter Trimmer will Use : \n" + prefixPairs.size() + " prefix pairs, \n" + commonSeqs.size()
+        log("Adapter Trimmer will Use : \n" + prefixPairs.size() + " prefix pairs, \n" + commonSeqs.size()
                 + " forward/reverse sequences, \n" + forwardSeqs.size() + " forward only sequences,\n"
                 + reverseSeqs.size() + " reverse only sequences.\n");
     }
@@ -169,7 +175,7 @@ public class AdapterTrimmer implements Trimmer {
             String seq = rec.getSequence();
 
             if (uniqueSeq.contains(seq)) {
-                messenger.append("Skipping duplicate Clipping Sequence: \n'" + seq + "'\n");
+                log("Skipping duplicate Clipping Sequence: \n'" + seq + "'\n");
             } else {
                 uniqueSeq.add(seq);
 
@@ -292,7 +298,7 @@ public class AdapterTrimmer implements Trimmer {
         private Integer minPrefix;
 
         private IlluminaPrefixPair(String prefix1, String prefix2, Integer minLen) {
-            messenger.append("Using PrefixPair: \n'" + prefix1 + "' and '" + prefix2 + "'\n");
+            log("Using PrefixPair: \n'" + prefix1 + "' and '" + prefix2 + "'\n");
 
             int length1 = prefix1.length();
             int length2 = prefix2.length();
@@ -578,7 +584,7 @@ public class AdapterTrimmer implements Trimmer {
         private long mask;
 
         IlluminaShortClippingSeq(String seq) {
-            messenger.append("Using Short Clipping Sequence: \n'" + seq + "'\n");
+            log("Using Short Clipping Sequence: \n'" + seq + "'\n");
 
             this.seq = seq;
             this.mask = calcSingleMask(seq.length());
@@ -638,7 +644,7 @@ public class AdapterTrimmer implements Trimmer {
     class IlluminaMediumClippingSeq extends IlluminaClippingSeq {
 
         IlluminaMediumClippingSeq(String seq) {
-            messenger.append("Using Medium Clipping Sequence: \n'" + seq + "'\n");
+            log("Using Medium Clipping Sequence: \n'" + seq + "'\n");
 
             this.seq = seq;
             pack = packSeqInternal(seq, false);
@@ -693,7 +699,7 @@ public class AdapterTrimmer implements Trimmer {
     class IlluminaLongClippingSeq extends IlluminaClippingSeq {
 
         IlluminaLongClippingSeq(String seq) {
-            messenger.append("Using Long Clipping Sequence: \n'" + seq + "'\n");
+            log("Using Long Clipping Sequence: \n'" + seq + "'\n");
 
             this.seq = seq;
 

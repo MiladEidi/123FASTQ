@@ -9,7 +9,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import javax.swing.JOptionPane;
 import org.itadaki.bzip2.BZip2InputStream;
 
 public class FastQFile implements SequenceFile {
@@ -31,10 +30,12 @@ public class FastQFile implements SequenceFile {
 
     private String name;
     private boolean isColorspace = false;
+    private final boolean stdin;
 
     protected FastQFile(Config config, File file) throws SequenceFormatException, IOException {
         this.file = file;
-        if (file.getName().startsWith("stdin")) {
+        stdin = file.getParent() == null && file.getName().startsWith("stdin") && !file.isFile();
+        if (stdin) {
             fileSize = Long.MAX_VALUE;
         } else {
             fileSize = file.length();
@@ -48,21 +49,29 @@ public class FastQFile implements SequenceFile {
             }
         }
 
-        if (!file.getName().startsWith("stdin")) {
+        if (!stdin) {
             fis = new FileInputStream(file);
         }
 
-        if (file.getName().startsWith("stdin")) {
-            br = new BufferedReader(new InputStreamReader(System.in));
-        } else if (file.getName().toLowerCase().endsWith(".gz")) {
-            br = new BufferedReader(new InputStreamReader(new MultiMemberGZIPInputStream(fis)));
-        } else if (file.getName().toLowerCase().endsWith(".bz2")) {
-            br = new BufferedReader(new InputStreamReader(new BZip2InputStream(fis, false)));
-        } else {
-            br = new BufferedReader(new InputStreamReader(fis));
+        try {
+            if (stdin) {
+                br = new BufferedReader(new InputStreamReader(System.in));
+            } else if (file.getName().toLowerCase(java.util.Locale.ROOT).endsWith(".gz")) {
+                br = new BufferedReader(new InputStreamReader(new MultiMemberGZIPInputStream(fis)));
+            } else if (file.getName().toLowerCase(java.util.Locale.ROOT).endsWith(".bz2")) {
+                br = new BufferedReader(new InputStreamReader(new BZip2InputStream(fis, false)));
+            } else {
+                br = new BufferedReader(new InputStreamReader(fis));
+            }
+            readNext();
+        } catch (IOException | SequenceFormatException ex) {
+            try {
+                close();
+            } catch (IOException cleanup) {
+                ex.addSuppressed(cleanup);
+            }
+            throw ex;
         }
-
-        readNext();
     }
 
     public String name() {
@@ -73,7 +82,7 @@ public class FastQFile implements SequenceFile {
         if (!hasNext()) {
             return 100;
         }
-        if (file.getName().startsWith("stdin")) {
+        if (stdin) {
             return 0;
         }
         try {
@@ -103,6 +112,17 @@ public class FastQFile implements SequenceFile {
         return seq;
     }
 
+    @Override
+    public void close() throws IOException {
+        if (!stdin) {
+            if (br != null) {
+                br.close();
+            } else if (fis != null) {
+                fis.close();
+            }
+        }
+    }
+
     private void readNext() throws SequenceFormatException {
         try {
             // First line should be the id
@@ -116,10 +136,7 @@ public class FastQFile implements SequenceFile {
 
                 if (id == null) {
                     nextSequence = null;
-                    br.close();
-                    if (fis != null) {
-                        fis.close();
-                    }
+                    close();
                     return;
                 }
                 if (id.length() == 0) {
@@ -131,8 +148,7 @@ public class FastQFile implements SequenceFile {
 
             if (!id.startsWith("@")) {
                 nextSequence = null;
-                JOptionPane.showMessageDialog(null, "First line of an inputted read has a problem.\nTo fix, run 123Fastq trimmer for this file, leniently.");
-                throw new SequenceFormatException("ID line didn't start with '@'");
+                throw new SequenceFormatException("FASTQ identifier line must start with '@' in " + name);
             }
 
             String seq;
@@ -150,8 +166,7 @@ public class FastQFile implements SequenceFile {
                     throw new IOException("No more data");
                 }
                 if (!midLine.startsWith("+")) {
-                    JOptionPane.showMessageDialog(null, "Comment line of an inputted read has a problem.\nTo fix, run 123Fastq trimmer for this file, leniently.");
-                    throw new SequenceFormatException("Midline '" + midLine + "' didn't start with '+'");
+                    throw new SequenceFormatException("FASTQ separator line must start with '+' in " + name);
                 }
                 // Then the quality string
                 quality = br.readLine();
@@ -159,7 +174,7 @@ public class FastQFile implements SequenceFile {
                     throw new IOException("No more data");
                 }
             } catch (IOException ioe) {
-            throw new SequenceFormatException("Your file is probably truncated.");
+                throw new SequenceFormatException("Could not read a complete FASTQ record in " + name + ": " + ioe.getMessage());
             }
 
             // We only check for colourspace on the first entry.  After that we assume
@@ -172,6 +187,9 @@ public class FastQFile implements SequenceFile {
             if (isColorspace()) {
                 nextSequence = new Sequence(this, convertColorspaceToBases(seq.toUpperCase()), seq.toUpperCase(), quality, id);
             } else {
+                if (seq.isEmpty() || seq.length() != quality.length()) {
+                    throw new SequenceFormatException("FASTQ sequence and quality lengths differ or are empty in " + name);
+                }
                 nextSequence = new Sequence(this, seq.toUpperCase(), quality, id);
             }
 
@@ -188,7 +206,7 @@ public class FastQFile implements SequenceFile {
 
         } catch (IOException ioe) {
             nextSequence = null;
-            ioe.printStackTrace();
+            throw new SequenceFormatException("Could not read " + name + ": " + ioe.getMessage());
         }
     }
 

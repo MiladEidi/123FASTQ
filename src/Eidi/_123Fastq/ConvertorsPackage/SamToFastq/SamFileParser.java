@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Iterator;
+import java.util.Locale;
 import javax.swing.JProgressBar;
 import net.sf.samtools.SAMFileReader;
 import net.sf.samtools.SAMRecord;
@@ -73,48 +74,31 @@ public class SamFileParser {
             return new FastqRecord("Interrupt", "", "", "");
         }
 
+        return toFastqRecord(record);
+    }
+
+    public static FastqRecord toFastqRecord(SAMRecord record) {
         String sequence = record.getReadString();
         String qualities = record.getBaseQualityString();
 
         if (record.getReadNegativeStrandFlag()) {
             sequence = reverseComplement(sequence);
-            qualities = reverse(qualities);
+            qualities = new StringBuilder(qualities).reverse().toString();
         }
         return new FastqRecord(record.getReadName(), sequence, "", qualities);
     }
 
-    private String reverseComplement(String sequence) {
-
-        char[] letters = reverse(sequence).toUpperCase().toCharArray();
-        char[] rc = new char[letters.length];
-        for (int i = 0; i < letters.length; i++) {
-            switch (letters[i]) {
-                case 'G':
-                    rc[i] = 'C';
-                    break;
-                case 'A':
-                    rc[i] = 'T';
-                    break;
-                case 'T':
-                    rc[i] = 'A';
-                    break;
-                case 'C':
-                    rc[i] = 'G';
-                    break;
-                default:
-                    rc[i] = letters[i];
-            }
+    public static String reverseComplement(String sequence) {
+        String bases = "ACGTRYSWKMBDHVN";
+        String complements = "TGCAYRSWMKVHDBN";
+        String upper = sequence.toUpperCase(Locale.ROOT);
+        StringBuilder result = new StringBuilder(sequence.length());
+        for (int i = upper.length() - 1; i >= 0; i--) {
+            char base = upper.charAt(i);
+            int index = bases.indexOf(base);
+            result.append(index < 0 ? base : complements.charAt(index));
         }
-        return new String(rc);
-    }
-
-    private String reverse(String sequence) {
-        char[] starting = sequence.toCharArray();
-        char[] reversed = new char[starting.length];
-        for (int i = 0; i < starting.length; i++) {
-            reversed[reversed.length - (1 + i)] = starting[i];
-        }
-        return new String(reversed);
+        return result.toString();
     }
 
     public File getFile() {

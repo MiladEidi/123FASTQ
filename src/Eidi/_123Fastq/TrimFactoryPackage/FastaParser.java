@@ -7,7 +7,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
-public class FastaParser {
+public class FastaParser implements java.io.Closeable {
 
     private BufferedReader reader;
 
@@ -56,8 +56,11 @@ public class FastaParser {
         parseOne();
     }
 
+    @Override
     public void close() throws IOException {
-        reader.close();
+        if (reader != null) {
+            reader.close();
+        }
     }
 
     public boolean hasNext() {

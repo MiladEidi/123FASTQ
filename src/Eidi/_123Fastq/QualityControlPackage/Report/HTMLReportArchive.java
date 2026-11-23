@@ -8,12 +8,12 @@ import Eidi._123Fastq.QualityControlPackage.Utilities.ImageToBase64;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.PrintWriter;
 import java.io.StringReader;
 import java.io.StringWriter;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
@@ -56,7 +56,14 @@ public class HTMLReportArchive {
         XMLOutputFactory xmlfactory = XMLOutputFactory.newInstance();
         this.xhtml = xmlfactory.createXMLStreamWriter(htmlStr);
 
-        zip = new ZipOutputStream(new FileOutputStream(zipFile));
+        try (ZipOutputStream stream = new ZipOutputStream(new FileOutputStream(zipFile))) {
+            zip = stream;
+            writeSingleArchive(htmlStr, modules);
+        }
+        Files.write(htmlFile.toPath(), htmlStr.toString().getBytes(StandardCharsets.UTF_8));
+    }
+
+    private void writeSingleArchive(StringWriter htmlStr, QCModule[] modules) throws IOException, XMLStreamException {
         zip.putNextEntry(new ZipEntry(folderName() + "/"));
         zip.putNextEntry(new ZipEntry(folderName() + "/Icons/"));
         zip.putNextEntry(new ZipEntry(folderName() + "/Images/"));
@@ -115,10 +122,10 @@ public class HTMLReportArchive {
         zip.putNextEntry(new ZipEntry(folderName() + "/123Fastq_report.html"));
         xhtml.flush();
         xhtml.close();
-        zip.write(htmlStr.toString().getBytes());
+        zip.write(htmlStr.toString().getBytes(StandardCharsets.UTF_8));
         zip.closeEntry();
         zip.putNextEntry(new ZipEntry(folderName() + "/123Fastq_data.txt"));
-        zip.write(data.toString().getBytes());
+        zip.write(data.toString().getBytes(StandardCharsets.UTF_8));
         zip.closeEntry();
 
         //XSL-FO
@@ -143,13 +150,6 @@ public class HTMLReportArchive {
         } catch (Exception e) {
             e.printStackTrace();
         }
-
-        zip.close();
-
-        PrintWriter pr = new PrintWriter(new FileWriter(htmlFile));
-        pr.print(htmlStr.toString());
-        pr.close();
-
     }
 
     //comprative
@@ -164,7 +164,14 @@ public class HTMLReportArchive {
         XMLOutputFactory xmlfactory = XMLOutputFactory.newInstance();
         this.xhtml = xmlfactory.createXMLStreamWriter(htmlStr);
 
-        zip = new ZipOutputStream(new FileOutputStream(zipFile));
+        try (ZipOutputStream stream = new ZipOutputStream(new FileOutputStream(zipFile))) {
+            zip = stream;
+            writeComparativeArchive(htmlStr, modules1, modules2);
+        }
+        Files.write(htmlFile.toPath(), htmlStr.toString().getBytes(StandardCharsets.UTF_8));
+    }
+
+    private void writeComparativeArchive(StringWriter htmlStr, QCModule[] modules1, QCModule[] modules2) throws IOException, XMLStreamException {
         zip.putNextEntry(new ZipEntry(folderName() + "/"));
         zip.putNextEntry(new ZipEntry(folderName() + "/Icons/"));
         zip.putNextEntry(new ZipEntry(folderName() + "/Images/"));
@@ -261,10 +268,10 @@ public class HTMLReportArchive {
         zip.putNextEntry(new ZipEntry(folderName() + "/123Fastq_report.html"));
         xhtml.flush();
         xhtml.close();
-        zip.write(htmlStr.toString().getBytes());
+        zip.write(htmlStr.toString().getBytes(StandardCharsets.UTF_8));
         zip.closeEntry();
         zip.putNextEntry(new ZipEntry(folderName() + "/123Fastq_data.txt"));
-        zip.write(data.toString().getBytes());
+        zip.write(data.toString().getBytes(StandardCharsets.UTF_8));
         zip.closeEntry();
 
         //XSL-FO
@@ -289,15 +296,6 @@ public class HTMLReportArchive {
         } catch (Exception e) {
             e.printStackTrace();
         }
-
-        zip.close();
-
-        // Save the HTML file at the same level as the zip file
-        PrintWriter pr = new PrintWriter(new FileWriter(htmlFile));
-
-        pr.print(htmlStr.toString());
-
-        pr.close();
     }
 
     public XMLStreamWriter xhtmlStream() {
@@ -433,7 +431,7 @@ public class HTMLReportArchive {
         xhtml.writeAttribute("class", "main");
 
         zip.putNextEntry(new ZipEntry(folderName() + "/summary.txt"));
-        zip.write(summaryText.toString().getBytes());
+        zip.write(summaryText.toString().getBytes(StandardCharsets.UTF_8));
 
     }
 
@@ -546,7 +544,7 @@ public class HTMLReportArchive {
         xhtml.writeAttribute("class", "main");
 
         zip.putNextEntry(new ZipEntry(folderName() + "/summary.txt"));
-        zip.write(summaryText.toString().getBytes());
+        zip.write(summaryText.toString().getBytes(StandardCharsets.UTF_8));
 
     }
 

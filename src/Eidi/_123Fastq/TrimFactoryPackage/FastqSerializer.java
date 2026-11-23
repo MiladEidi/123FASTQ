@@ -1,19 +1,22 @@
 package Eidi._123Fastq.TrimFactoryPackage;
 
 import java.io.BufferedWriter;
+import java.io.Closeable;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
+import java.util.Locale;
 import java.util.zip.GZIPOutputStream;
 import javax.swing.JProgressBar;
 import javax.swing.JTextArea;
 
 import org.itadaki.bzip2.BZip2OutputStream;
 
-public class FastqSerializer {
+public class FastqSerializer implements Closeable {
 
     private BufferedWriter stream;
     private File inputFile;
@@ -33,16 +36,8 @@ public class FastqSerializer {
     }
 
     public void open_Messenger(File file) {
-        String name = file.getName();
-        this.inputFile = file;
         try {
-            OutputStream gStream = new FileOutputStream(file);
-            if (name.endsWith(".gz")) {
-                gStream = new GZIPOutputStream(gStream);
-            } else if (name.endsWith(".bz2")) {
-                gStream = new BZip2OutputStream(gStream);
-            }
-            stream = new BufferedWriter(new OutputStreamWriter(gStream), 32768);
+            open(file, false);
         } catch (FileNotFoundException ex) {
             messenger.append("You didn't determine output file, correctly.\n");
         } catch (IOException ex) {
@@ -51,16 +46,8 @@ public class FastqSerializer {
     }
 
     public void open_Progbar(File file) {
-        String name = file.getName();
-        this.inputFile = file;
         try {
-            OutputStream gStream = new FileOutputStream(file);
-            if (name.endsWith(".gz")) {
-                gStream = new GZIPOutputStream(gStream);
-            } else if (name.endsWith(".bz2")) {
-                gStream = new BZip2OutputStream(gStream);
-            }
-            stream = new BufferedWriter(new OutputStreamWriter(gStream), 32768);
+            open(file, false);
         } catch (FileNotFoundException ex) {
             progBar.setString("You didn't determine Output File.");
         } catch (IOException ex) {
@@ -68,8 +55,28 @@ public class FastqSerializer {
         }
     }
 
+    public void open(File file, boolean append) throws IOException {
+        String name = file.getName().toLowerCase(Locale.ROOT);
+        this.inputFile = file;
+        OutputStream output = new FileOutputStream(file, append);
+        try {
+            if (name.endsWith(".gz")) {
+                output = new GZIPOutputStream(output, 32768);
+            } else if (name.endsWith(".bz2")) {
+                output = new BZip2OutputStream(output);
+            }
+            stream = new BufferedWriter(new OutputStreamWriter(output, StandardCharsets.UTF_8), 32768);
+        } catch (IOException | RuntimeException ex) {
+            output.close();
+            throw ex;
+        }
+    }
+
+    @Override
     public void close() throws IOException {
-        stream.close();
+        if (stream != null) {
+            stream.close();
+        }
     }
 
     public void deleteEmptyfiles() {

@@ -1,5 +1,6 @@
 package Eidi._123Fastq.QualityControlPackage.Sequence;
 
+import Eidi._123Fastq.ConvertorsPackage.SamToFastq.SamFileParser;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -26,6 +27,7 @@ public class BAMFile implements SequenceFile {
 	private SAMFileReader br;
 	private String name;
 	private Sequence nextSequence = null;
+	private boolean closed;
 	Iterator<SAMRecord> it;
 
 
@@ -36,9 +38,18 @@ public class BAMFile implements SequenceFile {
 		this.onlyMapped = onlyMapped;
 		SAMFileReader.setDefaultValidationStringency(SAMFileReader.ValidationStringency.SILENT);
 		fis = new FileInputStream(file);
-		br = new SAMFileReader(fis);
-		it = br.iterator();
-		readNext();
+		try {
+			br = new SAMFileReader(fis);
+			it = br.iterator();
+			readNext();
+		} catch (SequenceFormatException | RuntimeException ex) {
+			try {
+				close();
+			} catch (IOException | RuntimeException cleanup) {
+				ex.addSuppressed(cleanup);
+			}
+			throw ex;
+		}
 	}
 
 	public String name () {
@@ -81,8 +92,7 @@ public class BAMFile implements SequenceFile {
 			if (!it.hasNext()) {
 				nextSequence = null;
 				try {
-					br.close();
-					fis.close();
+					close();
 				}
 				catch (IOException ioe) {
 					ioe.printStackTrace();
@@ -118,6 +128,10 @@ public class BAMFile implements SequenceFile {
 
 		String sequence = record.getReadString();
 		String qualities = record.getBaseQualityString();
+		if (sequence.isEmpty() || sequence.equals("*") || qualities.equals("*")
+				|| sequence.length() != qualities.length()) {
+			throw new SequenceFormatException("Missing or inconsistent bases and qualities on SAM/BAM read " + record.getReadName());
+		}
 
 
 		// TODO: TEST THIS!!!
@@ -127,7 +141,7 @@ public class BAMFile implements SequenceFile {
 			List<CigarElement> elements = record.getCigar().getCigarElements();
 
 			// We need to clip the 3' end first otherwise the numbers at the 5' end won't be right.
-			if (elements.get(elements.size()-1).getOperator().equals(CigarOperator.S)) {
+			if (!elements.isEmpty() && elements.get(elements.size()-1).getOperator().equals(CigarOperator.S)) {
 				int value = elements.get(elements.size()-1).getLength();
 				sequence = sequence.substring(0,sequence.length()-value);
 				qualities = qualities.substring(0,qualities.length()-value);
@@ -135,7 +149,7 @@ public class BAMFile implements SequenceFile {
 			}
 
 
-			if (elements.get(0).getOperator().equals(CigarOperator.S)) {
+			if (!elements.isEmpty() && elements.get(0).getOperator().equals(CigarOperator.S)) {
 				int value = elements.get(0).getLength();
 				sequence = sequence.substring(value);
 				qualities = qualities.substring(value);
@@ -149,8 +163,8 @@ public class BAMFile implements SequenceFile {
 		// we need to reverse complement the sequence and reverse the qualities
 		// to get the original orientation of the read.
 		if (record.getReadNegativeStrandFlag()) {
-			sequence = reverseComplement(sequence);
-			qualities = reverse(qualities);
+			sequence = SamFileParser.reverseComplement(sequence);
+			qualities = new StringBuilder(qualities).reverse().toString();
 		}
 
 		nextSequence = new Sequence(this, sequence, qualities, record.getReadName());
@@ -158,38 +172,22 @@ public class BAMFile implements SequenceFile {
 	}
 
 
-	private String reverseComplement (String sequence) {
-
-		char [] letters = reverse(sequence).toUpperCase().toCharArray();
-		char [] rc = new char[letters.length];
-
-		for (int i=0;i<letters.length;i++) {
-			switch(letters[i]) {
-			case 'G': rc[i] = 'C';break;
-			case 'A': rc[i] = 'T';break;
-			case 'T': rc[i] = 'A';break;
-			case 'C': rc[i] = 'G';break;
-			default: rc[i] = letters[i];
-			}
-		}
-
-		return new String(rc);
-
-	}
-
-	private String reverse (String sequence) {
-		char [] starting = sequence.toCharArray();
-		char [] reversed = new char[starting.length];
-
-		for (int i=0;i<starting.length;i++) {
-			reversed[reversed.length-(1+i)] = starting[i];
-		}
-
-		return new String(reversed);
-	}
-
 	public File getFile() {
 		return file;
+	}
+
+	@Override
+	public void close() throws IOException {
+		if (!closed) {
+			closed = true;
+			try {
+				if (br != null) {
+					br.close();
+				}
+			} finally {
+				fis.close();
+			}
+		}
 	}
 
 }

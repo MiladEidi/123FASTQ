@@ -4,6 +4,14 @@ src/Eidi/_123Fastq/BarcodeSplitterPackage/BarcodeParameterCollector.java
 src/Eidi/_123Fastq/BarcodeSplitterPackage/BarcodeSplitter.java
 src/Eidi/_123Fastq/BarcodeSplitterPackage/BarcodeTerminal.java
 src/Eidi/_123Fastq/BarcodeSplitterPackage/txtFilter.java
+src/Eidi/_123Fastq/Cli/Arguments.java
+src/Eidi/_123Fastq/Cli/BarcodeCommand.java
+src/Eidi/_123Fastq/Cli/Cli.java
+src/Eidi/_123Fastq/Cli/ConvertCommand.java
+src/Eidi/_123Fastq/Cli/FastqInput.java
+src/Eidi/_123Fastq/Cli/Main.java
+src/Eidi/_123Fastq/Cli/StagedOutputs.java
+src/Eidi/_123Fastq/Cli/TrimCommand.java
 src/Eidi/_123Fastq/ConvertorsPackage/Fast5ToFastq/Fast5FileParser.java
 src/Eidi/_123Fastq/ConvertorsPackage/Fast5ToFastq/Fast5ToFastqPanel.java
 src/Eidi/_123Fastq/ConvertorsPackage/Fast5ToFastq/Fast5ToFastqTerminal.java

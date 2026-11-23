@@ -19,6 +19,7 @@ import Eidi._123Fastq.QualityControlPackage.Sequence.Sequence;
 import Eidi._123Fastq.QualityControlPackage.Sequence.SequenceFile;
 import Eidi._123Fastq.QualityControlPackage.Sequence.SequenceFormatException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -33,10 +34,9 @@ import java.util.concurrent.TimeUnit;
 /**
  * Runs QC analysis using a true producer-consumer parallel architecture.
  *
- * Each worker thread receives its own complete copy of every QC module and
- * processes a chunk of sequences end-to-end (no serial-module bottleneck on
- * the main thread).  After all workers finish, results are merged into the
- * master module set on the main thread.
+ * Workers use independent module copies and merge their results at the end.
+ * The input thread samples k-mers in file order so thread scheduling does not
+ * change which reads are sampled.
  */
 public class QcRunner {
 
@@ -117,25 +117,25 @@ public class QcRunner {
         ExecutorService executor = Executors.newFixedThreadPool(threadCount);
         List<Future<QCModule[]>> futures = new ArrayList<>(threadCount);
 
-        // Each worker gets its own complete copy of every module — no shared
-        // state, so no synchronisation is needed inside processSequence().
-        for (int i = 0; i < threadCount; i++) {
-            QCModule[] workerModules = createModuleCopies(modules);
-            futures.add(executor.submit(new WorkerTask(workerModules, workQueue, sentinel)));
-        }
-
+        QCModule[] orderedModules = Arrays.stream(modules).filter(KmerContent.class::isInstance).toArray(QCModule[]::new);
         int seqCount = 0;
         List<Sequence> currentChunk = new ArrayList<>(CHUNK_SIZE);
 
         try {
+            for (int i = 0; i < threadCount; i++) {
+                QCModule[] workerModules = createModuleCopies(modules);
+                futures.add(executor.submit(new WorkerTask(workerModules, workQueue, sentinel)));
+            }
             // Main thread: read the file and feed chunks to workers.
             while (sequenceFile.hasNext()) {
                 checkInterrupted();
-                currentChunk.add(sequenceFile.next());
+                Sequence sequence = sequenceFile.next();
+                processSequence(orderedModules, sequence);
+                currentChunk.add(sequence);
                 seqCount++;
 
                 if (currentChunk.size() == CHUNK_SIZE) {
-                    enqueue(workQueue, currentChunk);
+                    enqueue(workQueue, currentChunk, futures);
                     currentChunk = new ArrayList<>(CHUNK_SIZE);
                 }
                 publishProgress(sequenceFile, progressListener, seqCount);
@@ -143,12 +143,12 @@ public class QcRunner {
 
             // Flush last (possibly partial) chunk.
             if (!currentChunk.isEmpty()) {
-                enqueue(workQueue, currentChunk);
+                enqueue(workQueue, currentChunk, futures);
             }
 
             // Send one sentinel per worker so each exits cleanly.
             for (int i = 0; i < threadCount; i++) {
-                enqueue(workQueue, sentinel);
+                enqueue(workQueue, sentinel, futures);
             }
 
             // Collect worker results and merge into the master module set.
@@ -174,14 +174,20 @@ public class QcRunner {
      * Non-blocking offer loop so that the main thread remains interruptible
      * even when the work queue is full.
      */
-    private void enqueue(BlockingQueue<List<Sequence>> queue, List<Sequence> chunk) throws InterruptedException {
+    private void enqueue(BlockingQueue<List<Sequence>> queue, List<Sequence> chunk, List<Future<QCModule[]>> workers)
+            throws InterruptedException, ExecutionException {
         while (!queue.offer(chunk, 100, TimeUnit.MILLISECONDS)) {
             checkInterrupted();
+            for (Future<QCModule[]> worker : workers) {
+                if (worker.isDone()) {
+                    worker.get();
+                }
+            }
         }
     }
 
     // -------------------------------------------------------------------------
-    // Module copying — creates a fresh, independent instance of every module
+    // Module copying — creates an independent instance of each worker module
     // -------------------------------------------------------------------------
 
     /**
@@ -197,6 +203,10 @@ public class QcRunner {
 
         for (int i = 0; i < modules.length; i++) {
             QCModule m = modules[i];
+            if (m instanceof KmerContent) {
+                // K-mer sampling uses the original module in the input thread.
+                continue;
+            }
             if (m instanceof OverRepresentedSeqs) {
                 overRepCopy = new OverRepresentedSeqs();
                 copies[i] = overRepCopy;
@@ -208,8 +218,6 @@ public class QcRunner {
                 copies[i] = new BasicStats(((BasicStats) m).getName());
             } else if (m instanceof AdapterContent) {
                 copies[i] = new AdapterContent();
-            } else if (m instanceof KmerContent) {
-                copies[i] = new KmerContent();
             } else if (m instanceof PerTileQualityScores) {
                 copies[i] = new PerTileQualityScores();
             } else if (m instanceof PerBaseQualityScores) {
@@ -281,7 +289,7 @@ public class QcRunner {
     }
 
     // -------------------------------------------------------------------------
-    // Worker task — runs ALL modules on sequences taken from the shared queue
+    // Worker task — runs its modules on sequences taken from the shared queue
     // -------------------------------------------------------------------------
 
     private static class WorkerTask implements Callable<QCModule[]> {
@@ -305,7 +313,9 @@ public class QcRunner {
                 for (int s = 0; s < chunk.size(); s++) {
                     Sequence seq = chunk.get(s);
                     for (int m = 0; m < modules.length; m++) {
-                        processModule(modules[m], seq);
+                        if (modules[m] != null) {
+                            processModule(modules[m], seq);
+                        }
                     }
                 }
             }
