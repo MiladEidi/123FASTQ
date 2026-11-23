@@ -109,9 +109,10 @@ public class TabComponents extends JPanel {
 
         public void actionPerformed(ActionEvent e) {
             int i = tabPane.indexOfTabComponent(TabComponents.this);
-            if (i != -1) {
-                tabPane.remove(i);
+            if (i == -1 || !taskPanel.canClose()) {
+                return;
             }
+            tabPane.remove(i);
 
             if (tabPane.getTabCount() == 0) {
                 bg.remove(tabPane);

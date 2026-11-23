@@ -18,4 +18,8 @@ public abstract class MyJPanel extends JPanel{
     public void setShouldRun(boolean shouldRun) {
         this.shouldRun = shouldRun;
     }
+
+    public boolean canClose() {
+        return true;
+    }
 }

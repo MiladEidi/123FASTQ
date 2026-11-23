@@ -16,14 +16,18 @@ import Eidi._123Fastq.QualityControlPackage.Sequence.SequenceFactory;
 import Eidi._123Fastq.QualityControlPackage.Sequence.SequenceFile;
 import Eidi._123Fastq.QualityControlPackage.Sequence.SequenceFormatException;
 import Eidi._123Fastq.QualityControlPackage.Utilities.NameFormatException;
+import Eidi._123Fastq.SingleCellPackage.SingleCellPanel;
 import Eidi._123Fastq.TrimFactoryPackage.TrimPanel;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.ImageIcon;
+import javax.swing.JButton;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -37,8 +41,10 @@ import javax.swing.filechooser.FileFilter;
 
 public class App123Fastq extends javax.swing.JFrame {
 
+    private static final String SINGLE_CELL_TAB = "Single-cell analysis";
     private int mouseX;
     private int mouseY;
+    private boolean closing;
     public static int ClickedTrim;
     public static int ClickedAdapterTrim;
     public static int Single_ModeQC;
@@ -54,6 +60,53 @@ public class App123Fastq extends javax.swing.JFrame {
     public App123Fastq() {
         initComponents();
         mainQueue = new TaskQueue();
+        JButton singleCell = new JButton(SINGLE_CELL_TAB);
+        singleCell.setFont(lblQC.getFont());
+        singleCell.setBounds(0, 600, 270, 53);
+        singleCell.addActionListener(event -> openSingleCellTab());
+        pnlLeftSide.add(singleCell, 0);
+
+        setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
+        addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent event) {
+                closeApplication();
+            }
+        });
+    }
+
+    private void openSingleCellTab() {
+        if (TabAbsenceChecker()) {
+            TabsStarter();
+        }
+        int index = TabPane.indexOfTab(SINGLE_CELL_TAB);
+        if (index == -1) {
+            SingleCellPanel panel = new SingleCellPanel();
+            TabPane.addTab(SINGLE_CELL_TAB, panel);
+            index = TabPane.indexOfComponent(panel);
+            TabPane.setTabComponentAt(index, new TabComponents(TabPane, starterPanel, panel, bg));
+        }
+        TabPane.setSelectedIndex(index);
+    }
+
+    private void closeApplication() {
+        if (closing) {
+            return;
+        }
+        int index = TabPane == null ? -1 : TabPane.indexOfTab(SINGLE_CELL_TAB);
+        SingleCellPanel panel = index < 0 ? null : (SingleCellPanel) TabPane.getComponentAt(index);
+        boolean running = panel != null && panel.isRunning();
+        String message = running ? "Cancel single-cell analysis and close 123Fastq?"
+                : "Do you want to close 123Fastq Completely?";
+        if (JOptionPane.showConfirmDialog(this, message, "Close Confirmation",
+                JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE) == JOptionPane.OK_OPTION) {
+            closing = true;
+            if (running && panel.isRunning()) {
+                panel.cancelAndThen(() -> System.exit(0));
+            } else {
+                System.exit(0);
+            }
+        }
     }
 
     @SuppressWarnings("unchecked")
@@ -426,11 +479,7 @@ public class App123Fastq extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void lblCloseSignMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblCloseSignMouseClicked
-        int X = JOptionPane.showConfirmDialog(null, "Do you want to close 123Fastq Completely?", "Close Confirmation",
-                JOptionPane.OK_CANCEL_OPTION, JOptionPane.ERROR_MESSAGE);
-        if (X == 0) {
-            System.exit(0);
-        }
+        closeApplication();
     }//GEN-LAST:event_lblCloseSignMouseClicked
 
     private void lblMinSignMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblMinSignMouseClicked
@@ -988,12 +1037,7 @@ public class App123Fastq extends javax.swing.JFrame {
     }
 
     public boolean TabAbsenceChecker() {
-        return ClickedFast5ToFastq == 0
-                && ClickedSamToFastq == 0
-                && ClickedBarcode == 0
-                && ClickedTrim == 0
-                && Single_ModeQC == 0
-                && Comprative_ModeQC == 0;
+        return TabPane == null || TabPane.getTabCount() == 0;
     }
 
     public void TabsStarter() {
