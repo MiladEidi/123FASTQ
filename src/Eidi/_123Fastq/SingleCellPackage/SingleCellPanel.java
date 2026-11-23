@@ -22,6 +22,7 @@ import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
+import javax.swing.JEditorPane;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -112,6 +113,7 @@ public final class SingleCellPanel extends MyJPanel {
         JPanel buttons = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
         JButton addPair = new JButton("Add FASTQ pair");
         addPair.addActionListener(event -> addReadPair());
+        addPair.setToolTipText("Add the raw R1 and R2 FASTQs from one lane or sequencing chunk.");
         removePair.addActionListener(event -> {
             int[] selected = table.getSelectedRows();
             for (int i = selected.length - 1; i >= 0; i--) {
@@ -125,7 +127,12 @@ public final class SingleCellPanel extends MyJPanel {
                 removePair.setEnabled(!isRunning() && table.getSelectedRowCount() > 0));
         buttons.add(addPair);
         buttons.add(removePair);
-        panel.add(buttons, BorderLayout.SOUTH);
+        JButton guide = new JButton("Input and output guide");
+        guide.addActionListener(event -> showGuide());
+        JPanel readActions = new JPanel(new BorderLayout());
+        readActions.add(buttons, BorderLayout.WEST);
+        readActions.add(guide, BorderLayout.EAST);
+        panel.add(readActions, BorderLayout.SOUTH);
         inputs.add(table);
         inputs.add(addPair);
         return panel;
@@ -133,18 +140,24 @@ public final class SingleCellPanel extends MyJPanel {
 
     private JPanel buildSettings() {
         JPanel panel = new JPanel(new GridBagLayout());
-        pathRow(panel, 0, "Genome FASTA", fasta, false, "Select genome FASTA");
-        pathRow(panel, 1, "Annotation GTF", gtf, false, "Select GTF from the same reference assembly");
-        pathRow(panel, 2, "Barcode whitelist", whitelist, false, "Select the whitelist for your 10x chemistry");
-        pathRow(panel, 3, "Output directory", output, true, "Select a writable results directory");
-        pathRow(panel, 4, "STAR executable", executable, false, "Select the STAR executable");
-        executable.setToolTipText("Leave blank to use STAR on PATH. Requires STAR 2.7.11 or later 2.x.");
+        pathRow(panel, 0, "Genome FASTA", fasta, false, "Select genome FASTA",
+                "Genomic reference sequences for the organism. Use the same reference release as the GTF.");
+        pathRow(panel, 1, "Annotation GTF", gtf, false, "Select annotation GTF",
+                "Gene and exon annotations from the same reference release as the FASTA.");
+        pathRow(panel, 2, "Barcode whitelist", whitelist, false, "Select barcode whitelist",
+                "Valid cell barcodes for your 10x chemistry, one sequence per line.");
+        pathRow(panel, 3, "Output directory", output, true, "Select a writable results directory",
+                "Allow space for uncompressed inputs, the temporary STAR index, and both count matrices.");
+        pathRow(panel, 4, "STAR executable (optional)", executable, false, "Select the STAR executable",
+                "Leave blank to use STAR on PATH. Requires STAR 2.7.11 or a later 2.x release.");
 
         GridBagConstraints label = constraints(0, 5);
         JLabel chemistryLabel = new JLabel("Chemistry");
         chemistryLabel.setLabelFor(chemistry);
         panel.add(chemistryLabel, label);
         JPanel assay = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
+        chemistry.setToolTipText("Use the chemistry recorded for the library in your sequencing or prep records.");
+        includeIntrons.setToolTipText("Count exonic and intronic reads. Clear this option for exon-only counts.");
         assay.add(chemistry);
         assay.add(includeIntrons);
         GridBagConstraints options = constraints(1, 5);
@@ -153,7 +166,8 @@ public final class SingleCellPanel extends MyJPanel {
         panel.add(assay, options);
 
         JPanel resources = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
-        addOption(resources, "Expected cells", expectedCells, "Approximate cells for STARsolo cell calling.");
+        addOption(resources, "Expected cells", expectedCells,
+                "Enter the approximate number of cells recovered. The estimate guides cell calling.");
         addOption(resources, "Threads", threads, "CPU threads for STAR.");
         addOption(resources, "Index RAM (GiB)", indexRam, "STAR genome-index memory limit. Mapping also needs RAM.");
         GridBagConstraints resourcesRow = constraints(0, 6);
@@ -164,16 +178,20 @@ public final class SingleCellPanel extends MyJPanel {
         return panel;
     }
 
-    private void pathRow(JPanel panel, int row, String name, JTextField field, boolean directory, String title) {
+    private void pathRow(JPanel panel, int row, String name, JTextField field, boolean directory, String title,
+            String help) {
         JLabel label = new JLabel(name);
         label.setLabelFor(field);
+        label.setToolTipText(help);
         panel.add(label, constraints(0, row));
         GridBagConstraints entry = constraints(1, row);
         entry.fill = GridBagConstraints.HORIZONTAL;
         entry.weightx = 1;
+        field.setToolTipText(help);
+        field.getAccessibleContext().setAccessibleDescription(help);
         panel.add(field, entry);
         JButton browse = new JButton("Browse");
-        browse.setToolTipText(title);
+        browse.setToolTipText(help);
         browse.getAccessibleContext().setAccessibleName(title);
         browse.addActionListener(event -> {
             Path path = choose(title, directory);
@@ -184,6 +202,52 @@ public final class SingleCellPanel extends MyJPanel {
         panel.add(browse, constraints(2, row));
         inputs.add(field);
         inputs.add(browse);
+    }
+
+    private void showGuide() {
+        JEditorPane guide = new JEditorPane("text/html", "<html><head><style>"
+                + "h3 { margin-top: 8px; margin-bottom: 3px; } "
+                + "p, ul { margin-top: 2px; margin-bottom: 7px; }"
+                + "</style></head><body>"
+                + "<h3>1. Pair the sequencing reads</h3>"
+                + "<p>Choose the raw, demultiplexed <b>R1</b> (cell barcode and UMI) and its matching "
+                + "<b>R2</b> (cDNA). Add one pair per lane or chunk of the same library. Run separate libraries "
+                + "as separate jobs because they can reuse the same cell barcodes. Inputs can be plain text or gzip.</p>"
+                + "<h3>2. Match the reference and chemistry</h3>"
+                + "<p>Use the genomic FASTA and exon-annotated GTF distributed for the same reference release. "
+                + "Check your library prep or sequencing records for the 10x Chromium 3′ chemistry. Use its "
+                + "barcode whitelist, with one sequence per line.</p>"
+                + "<ul><li><b>v2</b> · 16-base barcode + 10-base UMI · "
+                + "<code>737K-august-2016.txt</code>.</li>"
+                + "<li><b>v3 and v3.1</b> · 16-base barcode + 12-base UMI · "
+                + "<code>3M-february-2018.txt.gz</code>.</li></ul>"
+                + "<p>Barcode whitelists are available with 10x Genomics Cell Ranger.</p>"
+                + "<h3>3. Set up the run</h3>"
+                + "<p>Use STAR 2.7.11 or a later 2.x release on Linux or macOS. On Windows, run 123Fastq and STAR "
+                + "in a graphical Linux session such as WSLg. Browse to the STAR executable or leave the field blank "
+                + "when STAR is on PATH.</p>"
+                + "<p>Choose an output volume with room for the uncompressed inputs, temporary genome index and count matrices. "
+                + "Index RAM limits memory for the genome index build. Alignment also uses memory.</p>"
+                + "<p>Enter the approximate number of recovered cells to guide cell calling. Keep intronic reads "
+                + "enabled for exon and intron counts, a common choice for single-nucleus RNA-seq. Clear the option "
+                + "for exon-only counts.</p>"
+                + "<h3>4. Check the results</h3>"
+                + "<p><b>Validate and run</b> checks the inputs before building the index. If the log shows low barcode "
+                + "matches, check your R1 files, chemistry, and whitelist.</p>"
+                + "<p>After the run, select <b>Open run folder</b>. Open <b>counts/filtered_feature_bc_matrix</b> "
+                + "for the called cells or <b>counts/raw_feature_bc_matrix</b> for all barcode counts. "
+                + "Each folder contains <code>matrix.mtx.gz</code>, <code>features.tsv.gz</code> and <code>barcodes.tsv.gz</code>. "
+                + "If zero cells are called, check the alignment and barcode summaries in the run folder.</p>"
+                + "</body></html>");
+        guide.putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, Boolean.TRUE);
+        guide.setFont(getFont());
+        guide.setEditable(false);
+        guide.setBorder(BorderFactory.createEmptyBorder(6, 12, 8, 14));
+        guide.setCaretPosition(0);
+        guide.getAccessibleContext().setAccessibleName("Single-cell analysis guide");
+        JScrollPane scroll = new JScrollPane(guide);
+        scroll.setPreferredSize(new Dimension(550, 460));
+        JOptionPane.showMessageDialog(this, scroll, "Single-cell analysis guide", JOptionPane.PLAIN_MESSAGE);
     }
 
     private static GridBagConstraints constraints(int column, int row) {
@@ -234,6 +298,9 @@ public final class SingleCellPanel extends MyJPanel {
 
     private void startAnalysis() {
         try {
+            if (pairs.isEmpty()) {
+                throw new IllegalArgumentException("Use Add FASTQ pair to select matching R1 and R2 files.");
+            }
             SingleCellRequest request = new SingleCellRequest(pairs, path(fasta, "genome FASTA"),
                     path(gtf, "annotation GTF"), path(whitelist, "barcode whitelist"),
                     path(output, "output directory"),
