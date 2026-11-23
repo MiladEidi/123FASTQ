@@ -9,7 +9,7 @@ import javax.swing.UIManager;
 
 public class Statics {
 
-    public static String VERSION = "1.3";
+    public static String VERSION = "1.4";
     public static final ImageIcon ERROR_ICON = new ImageIcon(ClassLoader.getSystemResource("Eidi/_123Fastq/QualityControlPackage/Resources/error.png"));
     public static final ImageIcon WARNING_ICON = new ImageIcon(ClassLoader.getSystemResource("Eidi/_123Fastq/QualityControlPackage/Resources/warning.png"));
     public static final ImageIcon OK_ICON = new ImageIcon(ClassLoader.getSystemResource("Eidi/_123Fastq/QualityControlPackage/Resources/tick.png"));

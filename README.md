@@ -2,9 +2,26 @@
 
 123Fastq is a Java desktop and command-line application for FASTQ quality control, format conversion, barcode splitting, read trimming, and single-cell RNA-seq counting.
 
+**Current version: 1.4** · [Changelog](CHANGELOG.md)
+
+## What's new in 1.4
+
+- **Single-cell RNA-seq counting.** Turn raw 10x Chromium 3′ FASTQs (v2, v3, v3.1) into raw and cell-filtered UMI count matrices for Scanpy or Seurat. Open it from **Single Cell › scRNA-seq (STARsolo)** in the sidebar or run `single-cell` on the command line. → [Single-cell guide](docs/single-cell-rna-seq.md)
+- **STAR included.** The official STAR 2.7.11b builds for Linux x86-64 and macOS ship inside the JAR, so single-cell runs need no separate installation. Apple Silicon Macs run STAR through Rosetta 2.
+- **Full command-line interface.** `qc`, `trim`, `split-barcodes`, `sam-to-fastq`, `fast5-to-fastq`, and `single-cell` run headlessly with script-friendly output and exit codes. → [Command-line reference](docs/command-line.md)
+- **More trimming and demultiplexing options on the CLI.** Paired-end trimming with orphan outputs, multi-threaded trimming, Illumina adapter FASTA clipping, and barcode splitting with mismatches and clipping.
+- **Redesigned sidebar.** A new **Single Cell** section is styled like the other sections.
+
+## Documentation
+
+- [Single-cell RNA-seq guide](docs/single-cell-rna-seq.md): inputs, bundled STAR, desktop and CLI runs, results, settings, and troubleshooting
+- [Command-line reference](docs/command-line.md): every command and option, output format, and exit codes
+- [Changelog](CHANGELOG.md)
+
 ## Project Layout
 
-- `src/` — Java source code and bundled adapter/config resources.
+- `src/` — Java source code and bundled resources, including the STAR binaries under `src/Eidi/_123Fastq/SingleCellPackage/native/`.
+- `docs/` — user guides for the single-cell workflow and the command line.
 - `test/` — lightweight smoke tests that run without JUnit.
 - `lib/` — required third-party JARs (included in the repository).
 - `build.xml` and `nbproject/` — NetBeans/Ant project files.
@@ -51,7 +68,7 @@ java -cp "build/classes:src:lib/*" Eidi._123Fastq.Cli.Main --help
 
 ## Command-line workflows
 
-Run `java -jar dist/123Fastq.jar <command> --help` for the complete options. Commands list output paths on stdout as tab-separated keys and values. Progress and errors go to stderr, and `--quiet` suppresses progress. Exit codes are `0` for success, `1` for a processing or I/O failure, `2` for invalid command usage, and `130` for interruption. Commands protect existing outputs and create output directories as needed.
+Run `java -jar dist/123Fastq.jar <command> --help` for the complete options, or see the [command-line reference](docs/command-line.md). Commands list output paths on stdout as tab-separated keys and values. Progress and errors go to stderr, and `--quiet` suppresses progress. Exit codes are `0` for success, `1` for a processing or I/O failure, `2` for invalid command usage, and `130` for interruption. Commands protect existing outputs and create output directories as needed.
 
 ### Quality control
 
@@ -124,7 +141,7 @@ The CLI defaults to one QC worker. Use `qc --threads N` to set the worker count.
 
 ## Single-cell RNA-seq
 
-Open **Single-cell analysis** in the sidebar. This workflow counts one 10x Chromium 3′ Gene Expression library at a time. It supports v2 (16-base cell barcode and 10-base UMI) and v3/v3.1 (16-base cell barcode and 12-base UMI). Use one FASTQ pair per lane or sequencing chunk from the same library. Run separate libraries in separate jobs because their cell barcodes can overlap.
+Open **Single Cell › scRNA-seq (STARsolo)** in the sidebar. The [single-cell guide](docs/single-cell-rna-seq.md) covers this workflow in more detail. This workflow counts one 10x Chromium 3′ Gene Expression library at a time. It supports v2 (16-base cell barcode and 10-base UMI) and v3/v3.1 (16-base cell barcode and 12-base UMI). Use one FASTQ pair per lane or sequencing chunk from the same library. Run separate libraries in separate jobs because their cell barcodes can overlap.
 
 1. On Linux x86-64 and macOS, no setup is needed: 123Fastq bundles the official [STAR 2.7.11b](https://github.com/alexdobin/STAR/releases/tag/2.7.11b) builds (MIT license) and extracts the right one on first use, to `~/.cache/123Fastq` on Linux or `~/Library/Caches/123Fastq` on macOS. The macOS build requires macOS 12 or later and is an Intel binary, so Apple Silicon Macs run it through Rosetta 2 (`softwareupdate --install-rosetta`); macOS 15 or later is recommended there. For a native Apple Silicon STAR, run `brew install rna-star` and select it in the form. Any selected STAR must be 2.7.11 or a later 2.x release. On Windows, run this workflow in a Linux environment with a graphical session, such as WSL with WSLg.
 2. Add the raw, demultiplexed **R1** (cell barcode and UMI) and **R2** (cDNA) FASTQs as pairs. Provide a genome **FASTA**, its matching **GTF** with annotated exons, and the chemistry-specific [barcode whitelist](https://github.com/alexdobin/STAR/blob/2.7.11b/docs/STARsolo.md#running-starsolo-for-10x-chromium-scrna-seq-data). The whitelist is one barcode per line. Inputs can be plain text or gzip-compressed.
@@ -145,7 +162,7 @@ The single-cell smoke test can run validation and matrix checks on its own. Pass
 
 ```bash
 ant compile-test
-java -cp 'build/classes:build/test/classes:lib/*' Eidi._123Fastq.SingleCellPackage.SingleCellSmokeTest /path/to/STAR
+java -cp 'build/classes:build/test/classes:lib/*' Eidi._123Fastq.SingleCellPackage.SingleCellSmokeTest --bundled
 ```
 
 To test the packaged CLI in a clean working directory with no library files next to its JAR:
