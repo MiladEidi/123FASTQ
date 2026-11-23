@@ -27,7 +27,6 @@ import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.ImageIcon;
-import javax.swing.JButton;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -60,12 +59,6 @@ public class App123Fastq extends javax.swing.JFrame {
     public App123Fastq() {
         initComponents();
         mainQueue = new TaskQueue();
-        JButton singleCell = new JButton(SINGLE_CELL_TAB);
-        singleCell.setFont(lblQC.getFont());
-        singleCell.setBounds(0, 600, 270, 53);
-        singleCell.addActionListener(event -> openSingleCellTab());
-        pnlLeftSide.add(singleCell, 0);
-
         setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
         addWindowListener(new WindowAdapter() {
             @Override
@@ -133,6 +126,11 @@ public class App123Fastq extends javax.swing.JFrame {
         pnlConvertorHide = new javax.swing.JPanel();
         lblFast5toFastq = new javax.swing.JLabel();
         lblConvertSAMtoFASTQ = new javax.swing.JLabel();
+        pnlSingleCell = new javax.swing.JPanel();
+        lblSingleCellIcon = new javax.swing.JLabel();
+        lblSingleCell = new javax.swing.JLabel();
+        pnlSingleCellHide = new javax.swing.JPanel();
+        lblSingleCellRna = new javax.swing.JLabel();
         jLabel3 = new javax.swing.JLabel();
         upperPanel = new javax.swing.JPanel();
         lblCloseSign = new javax.swing.JLabel();
@@ -395,6 +393,49 @@ public class App123Fastq extends javax.swing.JFrame {
 
         pnlLeftSide.add(pnlConvertorHide);
         pnlConvertorHide.setBounds(0, 500, 290, 90);
+
+        pnlSingleCell.setBackground(new java.awt.Color(187, 187, 187));
+        pnlSingleCell.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
+
+        lblSingleCellIcon.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Eidi/_123Fastq/GUI/Image/SingleCell_28px.png"))); // NOI18N
+        pnlSingleCell.add(lblSingleCellIcon, new org.netbeans.lib.awtextra.AbsoluteConstraints(18, 13, 28, 28));
+
+        lblSingleCell.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
+        lblSingleCell.setText("Single Cell");
+        pnlSingleCell.add(lblSingleCell, new org.netbeans.lib.awtextra.AbsoluteConstraints(56, 0, 205, 54));
+
+        pnlLeftSide.add(pnlSingleCell);
+        pnlSingleCell.setBounds(0, 590, 280, 54);
+
+        pnlSingleCellHide.setOpaque(false);
+        pnlSingleCellHide.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                pnlSingleCellHideMouseEntered(evt);
+            }
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                pnlSingleCellHideMouseExited(evt);
+            }
+        });
+        pnlSingleCellHide.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
+
+        lblSingleCellRna.setFont(new java.awt.Font("Segoe UI", 1, 18)); // NOI18N
+        lblSingleCellRna.setForeground(new java.awt.Color(255, 255, 255));
+        lblSingleCellRna.setText("scRNA-seq (STARsolo)");
+        lblSingleCellRna.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                lblSingleCellRnaMouseClicked(evt);
+            }
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                lblSingleCellRnaMouseEntered(evt);
+            }
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                lblSingleCellRnaMouseExited(evt);
+            }
+        });
+        pnlSingleCellHide.add(lblSingleCellRna, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 20, 250, -1));
+
+        pnlLeftSide.add(pnlSingleCellHide);
+        pnlSingleCellHide.setBounds(0, 630, 290, 60);
 
         jLabel3.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Eidi/_123Fastq/GUI/Image/leftside.png"))); // NOI18N
         pnlLeftSide.add(jLabel3);
@@ -679,6 +720,27 @@ public class App123Fastq extends javax.swing.JFrame {
     private void pnlConvertorHideMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_pnlConvertorHideMouseExited
         pnlConvert.setBackground(new Color(187, 187, 187));
     }//GEN-LAST:event_pnlConvertorHideMouseExited
+
+    private void lblSingleCellRnaMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblSingleCellRnaMouseClicked
+        openSingleCellTab();
+    }//GEN-LAST:event_lblSingleCellRnaMouseClicked
+
+    private void lblSingleCellRnaMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblSingleCellRnaMouseEntered
+        pnlSingleCell.setBackground(Color.WHITE);
+        lblSingleCellRna.setForeground(Color.GRAY);
+    }//GEN-LAST:event_lblSingleCellRnaMouseEntered
+
+    private void lblSingleCellRnaMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblSingleCellRnaMouseExited
+        lblSingleCellRna.setForeground(Color.WHITE);
+    }//GEN-LAST:event_lblSingleCellRnaMouseExited
+
+    private void pnlSingleCellHideMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_pnlSingleCellHideMouseEntered
+        pnlSingleCell.setBackground(Color.WHITE);
+    }//GEN-LAST:event_pnlSingleCellHideMouseEntered
+
+    private void pnlSingleCellHideMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_pnlSingleCellHideMouseExited
+        pnlSingleCell.setBackground(new Color(187, 187, 187));
+    }//GEN-LAST:event_pnlSingleCellHideMouseExited
 
     private int requestQcThreadCount() {
         int recommendedThreads = QcRunner.defaultThreadCount();
@@ -1078,6 +1140,9 @@ public class App123Fastq extends javax.swing.JFrame {
     private javax.swing.JLabel lblCloseSign;
     private javax.swing.JLabel lblConvert;
     private javax.swing.JLabel lblConvertSAMtoFASTQ;
+    private javax.swing.JLabel lblSingleCell;
+    private javax.swing.JLabel lblSingleCellIcon;
+    private javax.swing.JLabel lblSingleCellRna;
     private javax.swing.JLabel lblCutIcon;
     private javax.swing.JLabel lblFast5toFastq;
     private javax.swing.JLabel lblIUpside;
@@ -1096,6 +1161,8 @@ public class App123Fastq extends javax.swing.JFrame {
     private javax.swing.JPanel pnlLeftSide;
     private javax.swing.JPanel pnlQC;
     private javax.swing.JPanel pnlQCHide;
+    private javax.swing.JPanel pnlSingleCell;
+    private javax.swing.JPanel pnlSingleCellHide;
     private javax.swing.JPanel pnlTrimFactory;
     private javax.swing.JPanel pnlTrimHide;
     private javax.swing.JPanel starterPanel;

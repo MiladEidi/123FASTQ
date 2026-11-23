@@ -81,7 +81,7 @@ public final class SingleCellRunner {
         try {
             Files.createDirectory(scratch);
             report(log, progress, "Run folder: " + job);
-            String star = request.starExecutable == null ? "STAR" : request.starExecutable.toAbsolutePath().toString();
+            String star = resolveStar(request, log, progress);
             String version = checkStar(scratch, star);
             report(log, progress, "Found STAR " + version);
             writeSettings(job.resolve("run-settings.txt"), request, version);
@@ -143,12 +143,28 @@ public final class SingleCellRunner {
         }
     }
 
+    private static String resolveStar(SingleCellRequest request, Path log, Consumer<String> progress)
+            throws IOException {
+        if (request.starExecutable != null) {
+            return request.starExecutable.toAbsolutePath().toString();
+        }
+        String unavailable = BundledStar.unavailableReason();
+        if (unavailable == null) {
+            Path bundled = BundledStar.executable();
+            report(log, progress, "Using the STAR " + BundledStar.VERSION + " bundled with 123Fastq"
+                    + (BundledStar.needsRosetta() ? " through Rosetta 2" : "") + ": " + bundled);
+            return bundled.toString();
+        }
+        report(log, progress, unavailable + " Using STAR on PATH.");
+        return "STAR";
+    }
+
     private static String checkStar(Path scratch, String star) throws IOException, InterruptedException {
         Path output = scratch.resolve("version.txt");
         try {
             execute(scratch, output, 15, star, "--version");
         } catch (IOException ex) {
-            throw new IOException("Could not run STAR. Install STAR 2.7.11 or newer and select its executable. "
+            throw new IOException("Could not run STAR. Select a STAR 2.7.11 or newer executable. "
                     + ex.getMessage(), ex);
         }
         String version = tail(output).trim();

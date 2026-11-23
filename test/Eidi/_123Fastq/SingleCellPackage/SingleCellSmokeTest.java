@@ -29,7 +29,8 @@ public final class SingleCellSmokeTest {
             verifyInputChecks(fixture);
             verifyMatrixChecks(directory);
             if (args.length > 0) {
-                verifyStar(fixture, Paths.get(args[0]));
+                // Pass --bundled to test the default STAR packaged with 123Fastq.
+                verifyStar(fixture, "--bundled".equals(args[0]) ? null : Paths.get(args[0]));
                 verifyCancellation(fixture);
             }
             System.out.println("Single-cell smoke tests passed.");
@@ -107,6 +108,8 @@ public final class SingleCellSmokeTest {
             messages.forEach(System.err::println);
             throw ex;
         }
+        require(executable != null || messages.stream().anyMatch(m -> m.startsWith("Using the STAR " + BundledStar.VERSION)),
+                "Use the bundled STAR when none is selected");
         require(result.genes == 2, "Expected two genes");
         require(result.cells == 2, "Expected two called cells, got " + result.cells + "\n" + messages);
         require(result.umis == 52 && result.rawUmis == 53,

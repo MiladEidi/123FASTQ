@@ -149,7 +149,11 @@ public final class SingleCellPanel extends MyJPanel {
         pathRow(panel, 3, "Output directory", output, true, "Select a writable results directory",
                 "Allow space for uncompressed inputs, the temporary STAR index, and both count matrices.");
         pathRow(panel, 4, "STAR executable (optional)", executable, false, "Select the STAR executable",
-                "Leave blank to use STAR on PATH. Requires STAR 2.7.11 or a later 2.x release.");
+                BundledStar.supported()
+                        ? "Leave blank to use the bundled STAR " + BundledStar.VERSION
+                                + (BundledStar.needsRosetta() ? " (runs through Rosetta 2 on Apple Silicon)" : "")
+                                + ". A selected STAR must be 2.7.11 or a later 2.x release."
+                        : "Leave blank to use STAR on PATH. Requires STAR 2.7.11 or a later 2.x release.");
 
         GridBagConstraints label = constraints(0, 5);
         JLabel chemistryLabel = new JLabel("Chemistry");
@@ -223,9 +227,11 @@ public final class SingleCellPanel extends MyJPanel {
                 + "<code>3M-february-2018.txt.gz</code>.</li></ul>"
                 + "<p>Barcode whitelists are available with 10x Genomics Cell Ranger.</p>"
                 + "<h3>3. Set up the run</h3>"
-                + "<p>Use STAR 2.7.11 or a later 2.x release on Linux or macOS. On Windows, run 123Fastq and STAR "
-                + "in a graphical Linux session such as WSLg. Browse to the STAR executable or leave the field blank "
-                + "when STAR is on PATH.</p>"
+                + "<p>123Fastq includes STAR " + BundledStar.VERSION + " for Linux x86-64 and macOS and uses it when "
+                + "the STAR field is blank. Apple Silicon Macs run it through Rosetta 2 "
+                + "(<code>softwareupdate --install-rosetta</code>). For a native Apple Silicon build, install STAR "
+                + "with <code>brew install rna-star</code> and browse to it. A selected STAR must be 2.7.11 or a "
+                + "later 2.x release. On Windows, run 123Fastq in a graphical Linux session such as WSLg.</p>"
                 + "<p>Choose an output volume with room for the uncompressed inputs, temporary genome index and count matrices. "
                 + "Index RAM limits memory for the genome index build. Alignment also uses memory.</p>"
                 + "<p>Enter the approximate number of recovered cells to guide cell calling. Keep intronic reads "

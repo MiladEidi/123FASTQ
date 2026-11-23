@@ -98,7 +98,7 @@ SAM/BAM conversion writes primary reads in file order and restores the original 
 
 ### Single-cell counting
 
-Provide R1 and R2 in matching lane order. Repeat each flag for the remaining lanes of the same 10x library. `--star` selects the STAR executable when it is outside `PATH`. Chemistry, reference, and disk requirements are described in [Single-cell RNA-seq](#single-cell-rna-seq).
+Provide R1 and R2 in matching lane order. Repeat each flag for the remaining lanes of the same 10x library. `--star` selects a different STAR executable. Without it, the bundled STAR is used on Linux x86-64 and macOS, and STAR on `PATH` elsewhere. Chemistry, reference, and disk requirements are described in [Single-cell RNA-seq](#single-cell-rna-seq).
 
 ```bash
 java -jar dist/123Fastq.jar single-cell \
@@ -126,7 +126,7 @@ The CLI defaults to one QC worker. Use `qc --threads N` to set the worker count.
 
 Open **Single-cell analysis** in the sidebar. This workflow counts one 10x Chromium 3′ Gene Expression library at a time. It supports v2 (16-base cell barcode and 10-base UMI) and v3/v3.1 (16-base cell barcode and 12-base UMI). Use one FASTQ pair per lane or sequencing chunk from the same library. Run separate libraries in separate jobs because their cell barcodes can overlap.
 
-1. Make [STAR 2.7.11 or a later 2.x release](https://github.com/alexdobin/STAR/releases) available on `PATH` or select its executable in the form. STAR runs locally on Linux or macOS. On Windows, run this workflow in a Linux environment with a graphical session, such as WSL with WSLg.
+1. On Linux x86-64 and macOS, no setup is needed: 123Fastq bundles the official [STAR 2.7.11b](https://github.com/alexdobin/STAR/releases/tag/2.7.11b) builds (MIT license) and extracts the right one on first use, to `~/.cache/123Fastq` on Linux or `~/Library/Caches/123Fastq` on macOS. The macOS build requires macOS 12 or later and is an Intel binary, so Apple Silicon Macs run it through Rosetta 2 (`softwareupdate --install-rosetta`); macOS 15 or later is recommended there. For a native Apple Silicon STAR, run `brew install rna-star` and select it in the form. Any selected STAR must be 2.7.11 or a later 2.x release. On Windows, run this workflow in a Linux environment with a graphical session, such as WSL with WSLg.
 2. Add the raw, demultiplexed **R1** (cell barcode and UMI) and **R2** (cDNA) FASTQs as pairs. Provide a genome **FASTA**, its matching **GTF** with annotated exons, and the chemistry-specific [barcode whitelist](https://github.com/alexdobin/STAR/blob/2.7.11b/docs/STARsolo.md#running-starsolo-for-10x-chromium-scrna-seq-data). The whitelist is one barcode per line. Inputs can be plain text or gzip-compressed.
 3. Select a writable output directory, the chemistry, and the approximate number of expected cells. **Include intronic reads** selects STARsolo `GeneFull`. Clear it for exon-only `Gene` counting. The index RAM setting limits STAR's index build. Mapping also needs RAM, which can reach tens of gigabytes for a mammalian genome.
 4. Select **Validate and run**. The app reads every FASTQ record, checks that mates match and have valid sequence and quality lengths, validates whitelist entries, and checks GTF contig names and coordinates against the FASTA. Use a FASTA and GTF distributed for the same reference release. The log reports sampled barcode match rates and flags low matches. If validation succeeds, the app builds the genome index and runs STARsolo alignment, barcode correction, UMI deduplication, and `CellRanger2.2` cell calling.
@@ -141,7 +141,7 @@ The app stages normalized, uncompressed inputs and builds a temporary STAR index
 
 Each matrix is a gzip-compressed Matrix Market `matrix.mtx.gz` with genes in rows and barcodes in columns, plus `features.tsv.gz` and `barcodes.tsv.gz`. Use the filtered folder with tools such as Scanpy `read_10x_mtx` or Seurat `Read10X`. `Summary.csv` and `STAR-Log.final.out` in the run directory report quantification and mapping metrics. A filtered result can contain zero cells.
 
-The single-cell smoke test can run validation and matrix checks on its own. Pass a STAR executable to also run the synthetic FASTQ-to-matrix test.
+The single-cell smoke test can run validation and matrix checks on its own. Pass a STAR executable, or `--bundled` for the packaged STAR, to also run the synthetic FASTQ-to-matrix test.
 
 ```bash
 ant compile-test

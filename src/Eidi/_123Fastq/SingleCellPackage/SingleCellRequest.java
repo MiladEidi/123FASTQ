@@ -49,7 +49,7 @@ public final class SingleCellRequest {
     final int threads;
     final int indexRamGiB;
 
-    /** A null starExecutable selects STAR on PATH. */
+    /** A null starExecutable selects the bundled STAR on Linux x86-64, otherwise STAR on PATH. */
     public SingleCellRequest(List<ReadPair> pairs, Path fasta, Path gtf, Path whitelist,
             Path outputParent, Path starExecutable, Chemistry chemistry, boolean includeIntrons,
             int expectedCells, int threads, int indexRamGiB) {

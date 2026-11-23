@@ -96,6 +96,7 @@ src/Eidi/_123Fastq/QualityControlPackage/Utilities/NameFormatException.java
 src/Eidi/_123Fastq/QualityControlPackage/Utilities/NanoporeBasename.java
 src/Eidi/_123Fastq/QualityControlPackage/Utilities/QualityCount.java
 src/Eidi/_123Fastq/QualityControlPackage/Utilities/RGB.java
+src/Eidi/_123Fastq/SingleCellPackage/BundledStar.java
 src/Eidi/_123Fastq/SingleCellPackage/SingleCellInputs.java
 src/Eidi/_123Fastq/SingleCellPackage/SingleCellMatrix.java
 src/Eidi/_123Fastq/SingleCellPackage/SingleCellPanel.java
